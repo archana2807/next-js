@@ -9,7 +9,7 @@ import BreadComp from '../components/BreadComp';
 import DataTable from '../components/DataTable';
 import NoDataFound from '../components/NoDataFound';
 import { FaEdit, FaTrash, FaRegCopy } from 'react-icons/fa';
-import { useAuth } from '../utils/AuthContext';  // Adjust path as per your project
+import { signOut, useSession } from 'next-auth/react';
 
 export default function JobsClient({ jobs, total, page, perPage, search }) {
 
@@ -17,8 +17,9 @@ export default function JobsClient({ jobs, total, page, perPage, search }) {
     const router = useRouter();
     const [searchText, setSearchText] = useState(search || '');
     const [isPending, startTransition] = useTransition();
-    const { user } = useAuth(); // ✅ current user
-
+    const { data: session, status } = useSession();
+    const user = session?.user;
+    const isAuthenticated = !!session;
     // Debounced search navigation
     useEffect(() => {
         if (searchText === search) return;

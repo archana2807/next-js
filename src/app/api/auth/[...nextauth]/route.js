@@ -10,42 +10,53 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        try {
-          const res = await fetch("http://localhost/candidate_portal_api/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-        console.log("API Response:", res); // Add this line
-          const data = await res.json();
+        const res = await fetch("http://localhost/candidate_portal_api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: credentials.email,
+            password: credentials.password,
+          }),
+        });
 
-          if (!res.ok || !data || !data.user) {
-            throw new Error(data.message || "Invalid login credentials");
-          }
+        const data = await res.json();
 
-          // Return only the fields required for the session
-          return {
-            id: data.user.id,
-            name: data.user.name,
-            email: data.user.email,
-          };
-        } catch (error) {
-          console.error("Authorize error:", error);
-          return null;
+        if (!res.ok || !data || !data.user) {
+          throw new Error(data.message || "Invalid credentials");
         }
+
+        return {
+          id: data.user.recruiter_id,
+          name: data.user.name,
+          email: data.user.email,
+          token: data.token,
+        };
       },
     }),
   ],
-  pages: {
-    signIn: "/login", // Your custom login page
-  },
   session: {
     strategy: "jwt",
   },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.recruiter_id = user.id;
+        token.token = user.token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.recruiter_id = token.recruiter_id;
+      session.user.token = token.token;
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/auth/login",
+  },
   secret: process.env.NEXTAUTH_SECRET,
+  useSecureCookies: false, // ✅ for local development
+  debug: true,
 });
 
 export { handler as GET, handler as POST };

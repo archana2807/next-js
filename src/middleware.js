@@ -1,31 +1,41 @@
-import { NextResponse } from 'next/server';
+import { getToken } from "next-auth/jwt";
+import { NextResponse } from "next/server";
 
-import jwt from 'jsonwebtoken';
+export async function middleware(request) {
+  console.log("Middleware token",request);
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
-export function middleware(request) {
-  const token = request.cookies.get('token')?.value;
+  const { pathname } = request.nextUrl;
 
-  const protectedPaths = [ '/jobs/postjob', '/candidates', '/saved-candidates','/jobs/postjob/[id]'];
+  const isAuthPage = pathname === "/auth/login";
 
-  const isProtected = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
+  const isProtectedRoute = [
+    "/dashboard",
+    "/candidates",
+    "/saved-candidates",
+    "/jobs/postjob",
+  ].some((route) => pathname.startsWith(route));
 
-  if (isProtected && !token) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+  if (!token && isProtectedRoute) {
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
-  // Optional: Verify token is valid
-  // try {
-  //   jwt.verify(token, process.env.JWT_SECRET);
-  // } catch {
-  //   return NextResponse.redirect(new URL('/auth/login', request.url));
-  // }
+  if (token && isAuthPage) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
   return NextResponse.next();
 }
 
-// Match config
 export const config = {
-  matcher: [ '/jobs/:path*', '/candidates', '/saved-candidates'],
+  matcher: [
+    "/dashboard/:path*",
+    "/candidates/:path*",
+    "/saved-candidates/:path*",
+    "/jobs/postjob/:path*",
+    "/auth/login",
+  ],
 };

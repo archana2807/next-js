@@ -7,7 +7,7 @@ import NoDataFound from '../components/NoDataFound';
 import { FaFilter } from 'react-icons/fa';
 import { useSearchParams } from 'next/navigation';
 import SaveButton from './SaveButton';
-import { useAuth } from '../utils/AuthContext';
+import { signOut, useSession } from 'next-auth/react';
 
 const SKILLS = ['JavaScript', 'Python', 'Java', 'C++', 'React', 'Node.js', 'TypeScript', 'SQL'];
 const BATCHES = ['2021', '2022', '2023', '2024'];
@@ -18,7 +18,8 @@ const CandidatesClient = ({ candidates, total, currentPage }) => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [showFilters, setShowFilters] = useState(false);
-    const { user } = useAuth();
+    const { data: session, status } = useSession();
+    const user = session?.user;
     // 🔄 Track when a filter change is "transitioning"
     const [isPending, startTransition] = useTransition();
     const skills = useMemo(() => (searchParams.get('skills') || '').split(',').filter(Boolean), [searchParams]);
