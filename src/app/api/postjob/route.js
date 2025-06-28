@@ -1,22 +1,25 @@
+
+
+
+// app/api/postjob/route.js
 import { NextResponse } from 'next/server';
+import fetchWithAuth from '../../utils/fetchWithAuth'; // adjust path as needed
 
 export async function POST(req) {
   try {
-    // Read the request body as FormData
     const formData = await req.formData();
 
-    // Convert to a plain object for logging and transmission
-    const body = {};
+    // Optional: convert FormData to object for logging
+    const bodyObj = {};
     for (const [key, value] of formData.entries()) {
-      body[key] = value;
+      bodyObj[key] = value;
     }
+    console.log('Received FormData as object:', bodyObj);
 
-    console.log('Received FormData as object:', body);
-
-    // Forward to CodeIgniter backend
-    const response = await fetch('http://localhost/candidate_portal_api/postjob', {
+    // Use fetchWithAuth
+    const response = await fetchWithAuth('http://localhost/candidate_portal_api/postjob', {
       method: 'POST',
-      body: formData, // Send raw FormData directly
+      body: formData,
     });
 
     const text = await response.text();

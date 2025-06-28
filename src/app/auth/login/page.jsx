@@ -56,7 +56,7 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
             <div className="w-full max-w-md bg-white p-6 rounded shadow">
-                <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">Login</h2>
+                <h2 className="text-2xl font-bold mb-4 text-center text-gray-700">Recruiter Login</h2>
 
                 {errors.form && (
                     <p className="text-red-500 text-sm mb-4 text-center">{errors.form}</p>

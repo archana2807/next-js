@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import BreadComp from '../../components/BreadComp';
-import { showToast } from '../../utils/toastUtils';
+import { showToast } from '../../../utils/toastUtils';
+import BreadComp from '../../../components/BreadComp';
 
 const Select = dynamic(() => import('react-select'), { ssr: false });
 
@@ -39,17 +39,23 @@ const options = {
     ],
 };
 
-const initialJobState = {
-    title: '', company: null, location: [], experience: [],
-    skills: [], type: [], salary: '', description: '',
-    postedBy: '', expirationDate: ''
-};
-
-export default function PostJobPage() {
+export default function EditJobClient({ jobData: initialJob }) {
     const router = useRouter();
-    const [jobData, setJobData] = useState(initialJobState);
-    const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
+
+    const [jobData, setJobData] = useState({
+        title: initialJob.title || '',
+        salary: initialJob.salary || '',
+        description: initialJob.description || '',
+        postedBy: initialJob.postedBy || '',
+        expirationDate: initialJob.expirationDate || '',
+        company: options.companies.find((o) => o.value === String(initialJob.company)) || null,
+        location: (initialJob.location || '').split(',').map(val => options.locations.find(o => o.value === val)).filter(Boolean),
+        experience: (initialJob.experience || '').split(',').map(val => options.experience.find(o => o.value === val)).filter(Boolean),
+        skills: (initialJob.skills || '').split(',').map(val => options.skills.find(o => o.value === val)).filter(Boolean),
+        type: (initialJob.type || '').split(',').map(val => options.jobTypes.find(o => o.value === val)).filter(Boolean),
+    });
 
     const validate = () => {
         const errs = {};
@@ -74,7 +80,8 @@ export default function PostJobPage() {
         setLoading(true);
 
         const formData = new FormData();
-        formData.append('recruiterId', 1); // Adjust this as needed
+        formData.append('id', initialJob.id);
+        formData.append('recruiterId', 1);
         formData.append('title', jobData.title);
         formData.append('salary', jobData.salary);
         formData.append('description', jobData.description);
@@ -82,10 +89,10 @@ export default function PostJobPage() {
         formData.append('expirationDate', jobData.expirationDate);
         formData.append('postedDate', new Date().toISOString().split('T')[0]);
         formData.append('company', jobData.company?.value || '');
-        formData.append('location', jobData.location.map(o => o.value).join(','));
-        formData.append('experience', jobData.experience.map(o => o.value).join(','));
-        formData.append('skills', jobData.skills.map(o => o.value).join(','));
-        formData.append('type', jobData.type.map(o => o.value).join(','));
+        formData.append('location', jobData.location.map((o) => o.value).join(','));
+        formData.append('experience', jobData.experience.map((o) => o.value).join(','));
+        formData.append('skills', jobData.skills.map((o) => o.value).join(','));
+        formData.append('type', jobData.type.map((o) => o.value).join(','));
 
         try {
             const res = await fetch('/api/postjob', {
@@ -96,10 +103,10 @@ export default function PostJobPage() {
             const result = await res.json();
 
             if (res.ok) {
-                showToast('Job posted successfully!', 'success');
+                showToast('Job updated successfully!', 'success');
                 router.push('/jobs');
             } else {
-                showToast(result.error || 'Failed to post job', 'error');
+                showToast(result.error || 'Failed to update job', 'error');
             }
         } catch (err) {
             console.error(err);
@@ -111,97 +118,66 @@ export default function PostJobPage() {
 
     return (
         <div className="p-6">
-            <BreadComp title="Post a New Job" items={[
-                { label: 'Home', href: '/dashboard' },
-                { label: 'Jobs', href: '/jobs' },
-                { label: 'Post Job' }
-            ]} />
+            <BreadComp
+                title="Edit Job"
+                items={[
+                    { label: 'Home', href: '/dashboard' },
+                    { label: 'Jobs', href: '/jobs' },
+                    { label: 'Edit Job' },
+                ]}
+            />
 
             <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 shadow rounded">
-                <div>
-                    <label>Title</label>
-                    <input
-                        name="title"
-                        value={jobData.title}
-                        onChange={e => setJobData({ ...jobData, title: e.target.value })}
-                        className="w-full p-2 border rounded"
-                        placeholder="Job title"
-                    />
-                    {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
-                </div>
+                {[
+                    { label: 'Title', key: 'title', type: 'text' },
+                    { label: 'Salary', key: 'salary', type: 'text' },
+                    { label: 'Contact Email', key: 'postedBy', type: 'email' },
+                ].map(({ label, key, type }) => (
+                    <div key={key}>
+                        <label>{label}</label>
+                        <input
+                            type={type}
+                            value={jobData[key]}
+                            onChange={(e) => setJobData({ ...jobData, [key]: e.target.value })}
+                            className="w-full p-2 border rounded"
+                        />
+                        {errors[key] && <p className="text-red-500 text-sm">{errors[key]}</p>}
+                    </div>
+                ))}
 
                 <div>
                     <label>Company</label>
                     <Select
                         options={options.companies}
                         value={jobData.company}
-                        onChange={value => setJobData({ ...jobData, company: value })}
+                        onChange={(value) => setJobData({ ...jobData, company: value })}
                     />
                     {errors.company && <p className="text-red-500 text-sm">{errors.company}</p>}
                 </div>
 
-                <div>
-                    <label>Location</label>
-                    <Select
-                        options={options.locations}
-                        isMulti
-                        value={jobData.location}
-                        onChange={value => setJobData({ ...jobData, location: value })}
-                    />
-                    {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
-                </div>
-
-                <div>
-                    <label>Experience</label>
-                    <Select
-                        options={options.experience}
-                        isMulti
-                        value={jobData.experience}
-                        onChange={value => setJobData({ ...jobData, experience: value })}
-                    />
-                    {errors.experience && <p className="text-red-500 text-sm">{errors.experience}</p>}
-                </div>
-
-                <div>
-                    <label>Skills</label>
-                    <Select
-                        options={options.skills}
-                        isMulti
-                        value={jobData.skills}
-                        onChange={value => setJobData({ ...jobData, skills: value })}
-                    />
-                    {errors.skills && <p className="text-red-500 text-sm">{errors.skills}</p>}
-                </div>
-
-                <div>
-                    <label>Job Type</label>
-                    <Select
-                        options={options.jobTypes}
-                        isMulti
-                        value={jobData.type}
-                        onChange={value => setJobData({ ...jobData, type: value })}
-                    />
-                    {errors.type && <p className="text-red-500 text-sm">{errors.type}</p>}
-                </div>
-
-                <div>
-                    <label>Salary</label>
-                    <input
-                        name="salary"
-                        value={jobData.salary}
-                        onChange={e => setJobData({ ...jobData, salary: e.target.value })}
-                        className="w-full p-2 border rounded"
-                        placeholder="e.g. 50000"
-                    />
-                    {errors.salary && <p className="text-red-500 text-sm">{errors.salary}</p>}
-                </div>
+                {[
+                    { label: 'Location', key: 'location', options: options.locations },
+                    { label: 'Experience', key: 'experience', options: options.experience },
+                    { label: 'Skills', key: 'skills', options: options.skills },
+                    { label: 'Job Type', key: 'type', options: options.jobTypes },
+                ].map(({ label, key, options }) => (
+                    <div key={key}>
+                        <label>{label}</label>
+                        <Select
+                            options={options}
+                            isMulti
+                            value={jobData[key]}
+                            onChange={(val) => setJobData({ ...jobData, [key]: val })}
+                        />
+                        {errors[key] && <p className="text-red-500 text-sm">{errors[key]}</p>}
+                    </div>
+                ))}
 
                 <div>
                     <label>Description</label>
                     <textarea
-                        name="description"
                         value={jobData.description}
-                        onChange={e => setJobData({ ...jobData, description: e.target.value })}
+                        onChange={(e) => setJobData({ ...jobData, description: e.target.value })}
                         className="w-full p-2 border rounded"
                         placeholder="Job description..."
                     />
@@ -209,24 +185,11 @@ export default function PostJobPage() {
                 </div>
 
                 <div>
-                    <label>Contact Email</label>
-                    <input
-                        name="postedBy"
-                        value={jobData.postedBy}
-                        onChange={e => setJobData({ ...jobData, postedBy: e.target.value })}
-                        className="w-full p-2 border rounded"
-                        placeholder="contact@company.com"
-                    />
-                    {errors.postedBy && <p className="text-red-500 text-sm">{errors.postedBy}</p>}
-                </div>
-
-                <div>
                     <label>Expiration Date</label>
                     <input
-                        name="expirationDate"
                         type="date"
                         value={jobData.expirationDate}
-                        onChange={e => setJobData({ ...jobData, expirationDate: e.target.value })}
+                        onChange={(e) => setJobData({ ...jobData, expirationDate: e.target.value })}
                         className="w-full p-2 border rounded"
                     />
                     {errors.expirationDate && <p className="text-red-500 text-sm">{errors.expirationDate}</p>}
@@ -246,7 +209,7 @@ export default function PostJobPage() {
                         className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
                         disabled={loading}
                     >
-                        {loading ? 'Posting...' : 'Post Job'}
+                        {loading ? 'Updating...' : 'Update Job'}
                     </button>
                 </div>
             </form>

@@ -1,53 +1,68 @@
+
+
+
+
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import BreadComp from '../components/BreadComp';
 import DataTable from '../components/DataTable';
-import NoDataFound from '../components/NoDataFound';
 
 export default function SavedCandidatesClient({ candidates, total, page, perPage, search }) {
-    const router = useRouter();
-    const [searchText, setSearchText] = useState(search);
+  const router = useRouter();
+  const [searchText, setSearchText] = useState(search);
+  const [isPending, startTransition] = useTransition();
 
-    const handleSearch = () => {
-        router.push(`/saved-candidates?page=1&perPage=${perPage}&search=${searchText}`);
-    };
+  // 🔁 Trigger router.push after user stops typing (500ms delay)
+    useEffect(() => {
+      if (searchText === search) return; // ✅ prevent unnecessary push on initial load
 
-    const handlePageChange = (newPage) => {
-        router.push(`/saved-candidates?page=${newPage}&perPage=${perPage}&search=${searchText}`);
-    };
+    const delayDebounce = setTimeout(() => {
+      startTransition(() => {
+        router.push(`/saved-candidates?page=1&perPage=${perPage}&search=${encodeURIComponent(searchText)}`);
+      });
+    }, 500);
 
-    const handlePerPageChange = (newPerPage) => {
-        router.push(`/saved-candidates?page=1&perPage=${newPerPage}&search=${searchText}`);
-    };
+    return () => clearTimeout(delayDebounce); // cleanup
+  }, [searchText]); // rerun when searchText or perPage changes
 
-    const columns = [
-        { accessorKey: 'name', header: 'Candidate Name', cell: info => info.getValue() },
-        { accessorKey: 'location', header: 'Location', cell: info => info.getValue() || 'Not Specified' },
-        { accessorKey: 'expected_salary', header: 'Expected Salary', cell: info => info.getValue() || 'Not Provided' },
-        { accessorKey: 'experience_years', header: 'Experience', cell: info => info.getValue() || 'Fresher' },
-        { accessorKey: 'education', header: 'Education', cell: info => info.getValue() || 'Not Provided' },
-    ];
+  const handlePageChange = (newPage) => {
+    startTransition(() => {
+      router.push(`/saved-candidates?page=${newPage}&perPage=${perPage}&search=${encodeURIComponent(searchText)}`);
+    });
+  };
 
-    return (
-        <div className="p-6">
-            <BreadComp title="Saved Candidates" items={[{ label: 'Home', href: '/' }, { label: 'Saved Candidates' }]} />
+  const handlePerPageChange = (newPerPage) => {
+    startTransition(() => {
+      router.push(`/saved-candidates?page=1&perPage=${newPerPage}&search=${encodeURIComponent(searchText)}`);
+    });
+  };
 
-            
-            {candidates.length === 0 ? (
-                <NoDataFound message="No saved candidates found." />
-            ) : (
-                <DataTable
-                    data={candidates}
-                    columns={columns}
-                    total={total}
-                    page={page}
-                    perPage={perPage}
-                    onPageChange={handlePageChange}
-                    onPerPageChange={handlePerPageChange}
-                />
-            )}
-        </div>
-    );
+  const columns = [
+    { accessorKey: 'name', header: 'Candidate Name', cell: info => info.getValue() },
+    { accessorKey: 'location', header: 'Location', cell: info => info.getValue() || 'Not Specified' },
+    { accessorKey: 'expected_salary', header: 'Expected Salary', cell: info => info.getValue() || 'Not Provided' },
+    { accessorKey: 'experience_years', header: 'Experience', cell: info => info.getValue() || 'Fresher' },
+    { accessorKey: 'education', header: 'Education', cell: info => info.getValue() || 'Not Provided' },
+  ];
+
+  return (
+    <div className="p-6">
+      <BreadComp title="Saved Candidates" items={[{ label: 'Home', href: '/' }, { label: 'Saved Candidates' }]} />
+
+      <DataTable
+        isLoading={isPending}
+        data={candidates}
+        columns={columns}
+        total={total}
+        page={page}
+        perPage={perPage}
+        searchText={searchText}
+        onSearchTextChange={setSearchText}
+        onPageChange={handlePageChange}
+        onPerPageChange={handlePerPageChange}
+      />
+    </div>
+  );
 }

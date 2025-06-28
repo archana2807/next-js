@@ -1,6 +1,6 @@
 'use client';
 
-import { useOptionalClientAuth } from '../utils/authClient';
+
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import DataTable from '../components/DataTable';

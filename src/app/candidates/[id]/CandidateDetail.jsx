@@ -1,9 +1,13 @@
 'use client';
 
-import React from 'react';
-import { FaGithub, FaLinkedin, FaFileAlt } from 'react-icons/fa';
+import React, { useState } from 'react';
+
 import ResumeModal from '../../components/ResumeModal';
-import { useState } from 'react';
+import { FaGithub } from 'react-icons/fa';
+import { FaLinkedin } from 'react-icons/fa';
+import { FaFileAlt } from 'react-icons/fa';
+import { FaRegCopy } from 'react-icons/fa';
+import { FaCheck } from 'react-icons/fa';
 
 const CandidateDetail = ({ candidate }) => {
     const {
@@ -23,44 +27,73 @@ const CandidateDetail = ({ candidate }) => {
         skills,
         projects,
         experience,
+        resume,
     } = candidate;
+
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const resumeUrl = `http://localhost/candidate_portal_api/${resume}`;
+    const [copied, setCopied] = useState('');
+    const handleCopy = async (text, type) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(type);
+            setTimeout(() => setCopied(''), 2000);
+        } catch (err) {
+            console.error('Failed to copy!', err);
+        }
+    };
     return (
-        <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md space-y-6">
+        <div className=" mx-auto p-6 bg-white shadow-md rounded-xl space-y-8">
             {/* Header */}
-            <div className="flex items-start gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 {image ? (
-                    <img src={image} alt={name} className="w-24 h-24 object-cover rounded-full border" />
+                    <img src={`http://localhost/candidate_portal_api/${image}`} alt={name} className="w-20 h-20 rounded-full object-cover border" />
                 ) : (
-                    <div className="w-24 h-24 bg-blue-100 text-blue-600 flex items-center justify-center rounded-full border font-bold text-3xl uppercase">
+                    <div className="w-20 h-20 bg-blue-100 text-blue-600 flex items-center justify-center rounded-full border shadow text-3xl font-bold uppercase">
                         {name?.charAt(0) || '?'}
                     </div>
                 )}
-                <div>
+                <div className="space-y-2">
                     <h1 className="text-2xl font-bold text-gray-800">{name}</h1>
-                    <p className="text-gray-600">{email}</p>
-                    <p className="text-gray-600">{phone}</p>
-                    <p className="text-gray-600">{location}</p>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        {email}
+                        <button onClick={() => handleCopy(email, 'email')} className="text-blue-500 hover:text-blue-700">
+                            {copied === 'email' ? <FaCheck /> : <FaRegCopy />}
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                        {phone}
+                        <button onClick={() => handleCopy(phone, 'phone')} className="text-blue-500 hover:text-blue-700">
+                            {copied === 'phone' ? <FaCheck /> : <FaRegCopy />}
+                        </button>
+                    </div>
+
+                    <p className="text-sm text-gray-600">{location}</p>
                 </div>
             </div>
 
             {/* Summary */}
-            <div className="space-y-1">
+            <div className="space-y-2 text-sm text-gray-700">
                 <p><strong>Education:</strong> {education}</p>
                 <p><strong>College:</strong> {college} ({branch}, {batch})</p>
                 <p><strong>GPA:</strong> {gpa}</p>
-                <p><strong>Experience:</strong> {experience_years}</p>
-                <p><strong>Expected Salary:</strong> {expected_salary}</p>
-                {description && <p className="text-gray-700"><strong>About:</strong> {description}</p>}
+                <p><strong>Experience:</strong> {experience_years} year(s)</p>
+                <p><strong>Expected Salary:</strong> ₹{expected_salary}</p>
+                {description && <p><strong>About:</strong> {description}</p>}
             </div>
 
             {/* Skills */}
             {skills?.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold mb-2">Skills</h2>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-2">Skills</h2>
                     <div className="flex flex-wrap gap-2">
                         {skills.map(skill => (
-                            <span key={skill} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                            <span
+                                key={skill}
+                                className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full"
+                            >
                                 {skill}
                             </span>
                         ))}
@@ -71,51 +104,69 @@ const CandidateDetail = ({ candidate }) => {
             {/* Experience */}
             {experience?.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold mb-2">Experience</h2>
-                    {experience.map((exp, idx) => (
-                        <div key={idx} className="mb-3">
-                            <p className="font-semibold text-gray-800">{exp.role} @ {exp.company}</p>
-                            <p className="text-sm text-gray-600 italic">{exp.duration}</p>
-                            <p className="text-sm text-gray-700 mt-1">{exp.description}</p>
-                        </div>
-                    ))}
+                    <h2 className="text-lg font-semibold text-gray-800 mb-2">Experience</h2>
+                    <div className="space-y-3 text-sm">
+                        {experience.map((exp, idx) => (
+                            <div key={idx}>
+                                <p className="font-semibold text-gray-800">{exp.role} @ {exp.company}</p>
+                                <p className="text-gray-500 italic">{exp.duration}</p>
+                                <p className="text-gray-700">{exp.description}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {/* Projects */}
             {projects?.length > 0 && (
                 <div>
-                    <h2 className="text-lg font-semibold mb-2">Projects</h2>
-                    {projects.map((project, idx) => (
-                        <div key={idx} className="mb-3">
-                            <p className="font-semibold text-gray-800">{project.name}</p>
-                            <p className="text-sm text-gray-700">{project.description}</p>
-                            <a href={project.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-blue-600 hover:underline text-sm mt-1">
-                                <FaGithub className="mr-1" /> View Project
-                            </a>
-                        </div>
-                    ))}
+                    <h2 className="text-lg font-semibold text-gray-800 mb-2">Projects</h2>
+                    <div className="space-y-3 text-sm">
+                        {projects.map((project, idx) => (
+                            <div key={idx}>
+                                <p className="font-semibold">{project.name}</p>
+                                <p className="text-gray-700">{project.description}</p>
+                                {project.link && (
+                                    <a
+                                        href={project.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center text-blue-600 hover:underline text-sm mt-1"
+                                    >
+                                        <FaGithub className="mr-1" /> View Project
+                                    </a>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
-            {/* Optional Links */}
-            <div className="flex gap-4 pt-4 border-t mt-6">
-                <a href={`https://linkedin.com/in/${name?.split(' ')[0]?.toLowerCase()}`} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline flex items-center gap-1 text-sm">
+            {/* Actions */}
+            <div className="flex flex-wrap gap-4 pt-4 border-t mt-6">
+                <a
+                    href={`https://linkedin.com/in/${name?.split(' ')[0]?.toLowerCase()}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-700 hover:underline flex items-center gap-2 text-sm"
+                >
                     <FaLinkedin /> LinkedIn
                 </a>
+
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded flex items-center gap-2"
                 >
-                    View Resume
+                    <FaFileAlt /> View Resume
                 </button>
-
-                <ResumeModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    resumeUrl="/archana_resume.pdf" // ✅ Use public path
-                />
             </div>
+
+            {/* Resume Modal */}
+            <ResumeModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                resumeUrl={resumeUrl}
+            />
         </div>
     );
 };

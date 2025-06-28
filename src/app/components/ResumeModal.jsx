@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import LoadingSpinner from '../components/LoadingSpinner';
+import LoadingMessage from './LoadingMessage';
 
 export default function ResumeModal({ isOpen, onClose, resumeUrl }) {
     const [loading, setLoading] = useState(true);
@@ -40,15 +40,20 @@ export default function ResumeModal({ isOpen, onClose, resumeUrl }) {
                 </div>
 
                 {/* Modal Body */}
-                <div className="px-4 py-2 h-[80vh] overflow-auto relative">
-                    {loading && <LoadingSpinner text="Loading resume..." />}
+                <div className="relative w-full  h-[70vh] bg-white rounded-lg shadow-lg overflow-hidden">
+                    {loading && (
+                        <div className="absolute inset-0 z-10 bg-white bg-opacity-70 flex items-center justify-center">
+                            <LoadingMessage text="Loading resume..." />
+                        </div>
+                    )}
                     <iframe
                         src={resumeUrl}
                         title="Resume"
-                        className="w-full h-full border rounded-md shadow-inner"
+                        className="w-full h-full border rounded-md shadow-inner relative z-0"
                         onLoad={() => setLoading(false)}
                     />
                 </div>
+
 
                 {/* Modal Footer */}
                 <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">

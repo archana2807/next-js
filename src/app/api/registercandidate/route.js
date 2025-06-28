@@ -13,6 +13,7 @@ export async function POST(req) {
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (error) {
+    
     console.error('Error in /api/registercandidate:', error); // Log the error to terminal
     return NextResponse.json(
       { message: 'Internal server error', details: error.message },

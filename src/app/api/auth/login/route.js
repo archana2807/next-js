@@ -23,6 +23,7 @@ export async function POST(request) {
     httpOnly: true,
     secure: true,
     sameSite: 'lax',
+    
   });
 
   response.cookies.set('user', JSON.stringify(data.user), {

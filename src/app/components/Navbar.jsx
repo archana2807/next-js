@@ -170,10 +170,10 @@ export default function Navbar() {
     const guestLinks = [
         { href: '/dashboard', label: 'Home' },
         { href: '/jobs', label: 'Jobs' },
-
+        { href: '/register-candidate', label: 'Candidate Register' },
     ];
     const authLinks = [...guestLinks, { href: '/saved-candidates', label: 'Saved Candidates' }, { href: '/candidates', label: 'Candidates' }];
-    const linksToShow = guestLinks;
+    const linksToShow = isAuthenticated ? authLinks : guestLinks;
 
     if (loading) return null;
 
